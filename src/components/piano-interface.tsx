@@ -1,29 +1,62 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from "react";
+import * as Tone from "tone";
 
-const PianoKey = ({ note, isBlack, onPress }: { note: string; isBlack: boolean; onPress: (note: string) => void }) => (
+const PianoKey = ({
+  note,
+  isBlack,
+  onPress,
+}: {
+  note: string;
+  isBlack: boolean;
+  onPress: (note: string) => void;
+}) => (
   <button
     className={`${
       isBlack
-        ? 'bg-black text-white w-8 h-32 -mx-4 z-10'
-        : 'bg-white text-black w-12 h-48'
+        ? "bg-black text-white w-8 h-32 -mx-4 z-10"
+        : "bg-white text-black w-12 h-48"
     } border border-gray-300 rounded-b-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
     onClick={() => onPress(note)}
   >
     <span className="sr-only">{note}</span>
   </button>
-)
+);
 
-const octave = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+const octave = [
+  "C",
+  "C#",
+  "D",
+  "D#",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "G#",
+  "A",
+  "A#",
+  "B",
+];
 
 export function PianoInterfaceComponent() {
-  const [lastPressed, setLastPressed] = useState<string | null>(null)
+  const [lastPressed, setLastPressed] = useState<string | null>(null);
+  const [synth, setSynth] = useState<Tone.Synth | null>(null);
+
+  useEffect(() => {
+    const newSynth = new Tone.Synth().toDestination();
+    setSynth(newSynth);
+    return () => {
+      newSynth.dispose();
+    };
+  }, []);
 
   const handleKeyPress = (note: string) => {
-    setLastPressed(note)
-    // Here you would typically trigger a sound for the pressed key
-  }
+    setLastPressed(note);
+    if (synth) {
+      synth.triggerAttackRelease(note, "8n");
+    }
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
@@ -34,7 +67,7 @@ export function PianoInterfaceComponent() {
               <PianoKey
                 key={`${octaveIndex}-${note}`}
                 note={`${note}${octaveIndex + 4}`}
-                isBlack={note.includes('#')}
+                isBlack={note.includes("#")}
                 onPress={handleKeyPress}
               />
             ))
@@ -47,5 +80,5 @@ export function PianoInterfaceComponent() {
         </p>
       )}
     </div>
-  )
+  );
 }

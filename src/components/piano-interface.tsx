@@ -41,20 +41,33 @@ const octave = [
 
 export function PianoInterfaceComponent() {
   const [lastPressed, setLastPressed] = useState<string | null>(null);
-  const [synth, setSynth] = useState<Tone.Synth | null>(null);
+  const [sampler, setSampler] = useState<Tone.Sampler | null>(null);
 
   useEffect(() => {
-    const newSynth = new Tone.Synth().toDestination();
-    setSynth(newSynth);
+    const newSampler = new Tone.Sampler({
+      urls: {
+        C4: "C4.mp3",
+        "D#4": "Ds4.mp3",
+        "F#4": "Fs4.mp3",
+        A4: "A4.mp3",
+      },
+      baseUrl: "https://tonejs.github.io/audio/salamander/",
+      onload: () => {
+        console.log("Sampler loaded!");
+      },
+    }).toDestination();
+
+    setSampler(newSampler);
+
     return () => {
-      newSynth.dispose();
+      newSampler.dispose();
     };
   }, []);
 
   const handleKeyPress = (note: string) => {
     setLastPressed(note);
-    if (synth) {
-      synth.triggerAttackRelease(note, "8n");
+    if (sampler && sampler.loaded) {
+      sampler.triggerAttackRelease(note, "2n");
     }
   };
 

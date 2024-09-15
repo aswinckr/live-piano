@@ -101,9 +101,16 @@ export function PianoInterfaceComponent() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-gray-800 p-8 rounded-lg shadow-2xl">
-        <div className="flex">
+    <div className="flex flex-col justify-between min-h-screen bg-gradient-to-b from-[#1f1f1f] to-[#1a1a1a]">
+      <div className="flex-grow flex items-start justify-center">
+        {lastPressed && (
+          <p className="mt-4 text-xl font-semibold text-gray-300">
+            Last key pressed: {lastPressed}
+          </p>
+        )}
+      </div>
+      <div className="w-full">
+        <div className="flex justify-center">
           {[0, 1, 2, 3].map((octaveIndex) =>
             octave.map((note, index) => (
               <PianoKey
@@ -116,11 +123,6 @@ export function PianoInterfaceComponent() {
           )}
         </div>
       </div>
-      {lastPressed && (
-        <p className="mt-4 text-xl font-semibold text-gray-700">
-          Last key pressed: {lastPressed}
-        </p>
-      )}
     </div>
   );
 }

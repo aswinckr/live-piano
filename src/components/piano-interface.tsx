@@ -15,9 +15,9 @@ const PianoKey = ({
   <button
     className={`${
       isBlack
-        ? "bg-black text-white w-8 h-32 -mx-4 z-10"
-        : "bg-white text-black w-12 h-48"
-    } border border-gray-300 rounded-b-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+        ? "bg-black text-white w-8 h-32 -mx-4 z-20"
+        : "bg-white text-black w-12 h-48 z-10"
+    } border border-gray-300 rounded-b-md focus:outline-none focus:ring-2 focus:ring-blue-500 relative`}
     onClick={() => onPress(note)}
   >
     <span className="sr-only">{note}</span>
@@ -100,16 +100,27 @@ export function PianoInterfaceComponent() {
     }
   };
 
+  const totalKeys = octave.length * 4; // 12 notes * 4 octaves = 48 keys
+
   return (
-    <div className="flex flex-col justify-between min-h-screen bg-gradient-to-b from-[#1f1f1f] to-[#1a1a1a]">
-      <div className="flex-grow flex items-start justify-center">
+    <div className="flex flex-col justify-between min-h-screen bg-gradient-to-b from-[#1f1f1f] to-[#1a1a1a] relative">
+      {/* Vertical lines */}
+      {Array.from({ length: totalKeys + 1 }).map((_, index) => (
+        <div
+          key={`line-${index}`}
+          className="absolute top-0 bottom-0 w-px bg-[#353535]"
+          style={{ left: `${(index / totalKeys) * 100}%` }}
+        ></div>
+      ))}
+
+      <div className="flex-grow flex items-start justify-center relative z-30">
         {lastPressed && (
           <p className="mt-4 text-xl font-semibold text-gray-300">
             Last key pressed: {lastPressed}
           </p>
         )}
       </div>
-      <div className="w-full">
+      <div className="w-full relative z-20">
         <div className="flex justify-center">
           {[0, 1, 2, 3].map((octaveIndex) =>
             octave.map((note, index) => (

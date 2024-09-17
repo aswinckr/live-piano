@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import * as Tone from "tone";
 
 const PianoKey = ({
@@ -43,6 +43,8 @@ export function PianoInterfaceComponent() {
   const [lastPressed, setLastPressed] = useState<string | null>(null);
   const [sampler, setSampler] = useState<Tone.Sampler | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [activeNotes, setActiveNotes] = useState<Set<string>>(new Set());
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const newSampler = new Tone.Sampler({
@@ -93,22 +95,42 @@ export function PianoInterfaceComponent() {
     };
   }, []);
 
-  const handleKeyPress = (note: string) => {
-    setLastPressed(note);
-    if (sampler && isLoaded) {
-      sampler.triggerAttackRelease(note, "2n");
-    }
-  };
+  const handleKeyPress = useCallback(
+    (note: string) => {
+      setLastPressed(note);
+      setActiveNotes((prev) => new Set(prev).add(note));
+      if (sampler && isLoaded) {
+        sampler.triggerAttackRelease(note, "2n");
+      }
+      setTimeout(() => {
+        setActiveNotes((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(note);
+          return newSet;
+        });
+      }, 500); // Adjust this value to change how long the line stays yellow
+    },
+    [sampler, isLoaded]
+  );
 
-  const totalKeys = octave.length * 4; // 12 notes * 4 octaves = 48 keys
+  const totalKeys = octave.length * 4;
 
   return (
-    <div className="flex flex-col justify-between min-h-screen bg-gradient-to-b from-[#1f1f1f] to-[#1a1a1a] relative">
+    <div
+      ref={containerRef}
+      className="flex flex-col justify-between min-h-screen bg-gradient-to-b from-[#1f1f1f] to-[#1a1a1a] relative"
+    >
       {/* Vertical lines */}
       {Array.from({ length: totalKeys + 1 }).map((_, index) => (
         <div
           key={`line-${index}`}
-          className="absolute top-0 bottom-0 w-px bg-[#353535]"
+          className={`absolute top-0 bottom-0 w-px transition-colors duration-300 ${
+            activeNotes.has(
+              `${octave[index % 12]}${Math.floor(index / 12) + 4}`
+            )
+              ? "bg-yellow-300"
+              : "bg-[#353535]"
+          }`}
           style={{ left: `${(index / totalKeys) * 100}%` }}
         ></div>
       ))}

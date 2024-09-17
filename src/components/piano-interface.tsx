@@ -7,17 +7,21 @@ const PianoKey = ({
   note,
   isBlack,
   onPress,
+  isPressed,
 }: {
   note: string;
   isBlack: boolean;
   onPress: (note: string) => void;
+  isPressed: boolean;
 }) => (
   <button
     className={`${
       isBlack
-        ? "bg-black text-white w-8 h-32 -mx-4 z-20"
-        : "bg-white text-black w-12 h-48 z-10"
-    } border border-gray-300 rounded-b-md focus:outline-none focus:ring-2 focus:ring-blue-500 relative`}
+        ? `bg-black text-white w-8 h-32 -mx-4 z-20 ${
+            isPressed ? "bg-gray-700" : ""
+          }`
+        : `bg-white text-black w-12 h-48 z-10 ${isPressed ? "bg-gray-300" : ""}`
+    } border border-gray-300 rounded-b-md focus:outline-none focus:ring-2 focus:ring-blue-500 relative transition-colors duration-100`}
     onClick={() => onPress(note)}
   >
     <span className="sr-only">{note}</span>
@@ -39,11 +43,34 @@ const octave = [
   "B",
 ];
 
+// Add this new mapping object
+const keyboardMap: { [key: string]: string } = {
+  a: "C4",
+  w: "C#4",
+  s: "D4",
+  e: "D#4",
+  d: "E4",
+  f: "F4",
+  t: "F#4",
+  g: "G4",
+  y: "G#4",
+  h: "A4",
+  u: "A#4",
+  j: "B4",
+  k: "C5",
+  o: "C#5",
+  l: "D5",
+  p: "D#5",
+  ";": "E5",
+  "'": "F5",
+};
+
 export function PianoInterfaceComponent() {
   const [lastPressed, setLastPressed] = useState<string | null>(null);
   const [sampler, setSampler] = useState<Tone.Sampler | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeNotes, setActiveNotes] = useState<Set<string>>(new Set());
+  const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -99,6 +126,7 @@ export function PianoInterfaceComponent() {
     (note: string) => {
       setLastPressed(note);
       setActiveNotes((prev) => new Set(prev).add(note));
+      setPressedKeys((prev) => new Set(prev).add(note));
       if (sampler && isLoaded) {
         sampler.triggerAttackRelease(note, "2n");
       }
@@ -108,10 +136,42 @@ export function PianoInterfaceComponent() {
           newSet.delete(note);
           return newSet;
         });
+        setPressedKeys((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(note);
+          return newSet;
+        });
       }, 500); // Adjust this value to change how long the line stays yellow
     },
     [sampler, isLoaded]
   );
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const note = keyboardMap[event.key.toLowerCase()];
+      if (note) {
+        handleKeyPress(note);
+      }
+    };
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      const note = keyboardMap[event.key.toLowerCase()];
+      if (note) {
+        setPressedKeys((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(note);
+          return newSet;
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [handleKeyPress]);
 
   const totalKeys = octave.length * 4;
 
@@ -151,6 +211,7 @@ export function PianoInterfaceComponent() {
                 note={`${note}${octaveIndex + 4}`}
                 isBlack={note.includes("#")}
                 onPress={handleKeyPress}
+                isPressed={pressedKeys.has(`${note}${octaveIndex + 4}`)}
               />
             ))
           )}
